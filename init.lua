@@ -1,4 +1,4 @@
--- cpu emulator. numbers are big endian. --
+-- cpu emulator. numbers are big endian. 255 bytes of accessible memory, write to address 255 to display a character on screen. 8 registers, 8th gets set to last key event. --
 
 local gpu = component.proxy(component.list("gpu")())
 local screen = component.proxy(component.list("screen")())
@@ -43,14 +43,14 @@ local insts = {
     end
     reg[r] = d
   end,
-  [0x1] = function(r, a) -- memload
-    if r > 7 then
+  [0x1] = function(r, _r) -- memload
+    if r > 7 or _r > 7 then
       error("invalid register")
     end
-    if a > 254 then
+    if reg[_r] > 254 then
       error("invalid memory address")
     end
-    reg[r] = mem[a]
+    reg[r] = mem[reg[_r]]
   end,
   [0x2] = function(r, a) -- store
     if r > 7 then
@@ -109,20 +109,27 @@ local insts = {
     end
     reg[7] = (reg[r] < reg[_r] and 0) or 1
   end,
-  [0x9] = function(_, o) -- jump if zero
-    if o > 85 then
-      error("invalid address")
-    end
-    if reg[7] == 0 then
+  [0x9] = function(c, o) -- jump
+    if c == 0 or c > 5 then -- absolute unconditional
       pgc = o
-    end
-  end,
-  [0xA] = function(_, o) -- jump if greater than zero
-    if o > 85 then
-      error("invalid address")
-    end
-    if reg[7] > 0 then
+    elseif c == 1 then -- absolute if zero
+      if reg[7] == 0 then
+        pgc = o
+      end
+    elseif c == 2 then -- absolute if not zero
+      if reg[7] ~= 0 then
+        pgc = o
+      end
+    elseif c == 3 then -- relative unconditional
       pgc = o
+    elseif c == 4 then -- relative if zero
+      if reg[7] == 0 then
+        pgc = pgc + o
+      end
+    elseif c == 5 then -- relative if not zero
+      if reg[7] ~= 0 then
+        pgc = pgc + o
+      end
     end
   end,
   [0xE] = function() -- noop
