@@ -38,8 +38,6 @@ local cpu = {
 local compiler = {
   rt      = true,
   ["end"] = true,
-  jpt     = true,
-  jtp     = true,
   lds     = true
 }
 

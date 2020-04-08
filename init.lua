@@ -10,7 +10,7 @@ end
 
 local mem = {}
 local prg = {}
-local reg = {[0]=0, [1]=0, [2]=0, [3]=0, [4]=0, [5]=0, [6]=0, [7]=0}
+local reg = {[0]=0, [1]=0, [2]=0, [3]=0, [4]=0, [5]=0, [6]=0, [7]=0,[8]=0,[9]=0,[10]=0,[11]=0,[12]=0,[13]=0,[14]=0,[15]=0}
 for i=0, 255, 1 do
   mem[i] = 0
 end
@@ -38,13 +38,13 @@ end
 
 local insts = {
   [0x0] = function(r, d) -- load
-    if r > 7 then
+    if r > 15 then
       error("invalid register")
     end
     reg[r] = d
   end,
   [0x1] = function(r, _r) -- memload
-    if r > 7 or _r > 7 then
+    if r > 15 or _r > 15 then
       error("invalid register")
     end
     if reg[_r] > 254 then
@@ -53,7 +53,7 @@ local insts = {
     reg[r] = mem[reg[_r]]
   end,
   [0x2] = function(r, a) -- store
-    if r > 7 then
+    if r > 15 then
       error("invalid register")
     end
     if a > 255 then
@@ -66,7 +66,7 @@ local insts = {
     end
   end,
   [0x3] = function(r, _r) -- add
-    if r > 7 or _r > 7 then
+    if r > 15 or _r > 15 then
       error("invalid register")
     end
     local rst = reg[r] + reg[_r]
@@ -76,7 +76,7 @@ local insts = {
     reg[r] = rst
   end,
   [0x4] = function(r, _r) -- sub
-    if r > 7 or _r > 7 then
+    if r > 15 or _r > 15 then
       error("invalid register")
     end
     local rst = reg[r] - reg[_r]
@@ -86,25 +86,25 @@ local insts = {
     reg[r] = rst
   end,
   [0x5] = function(r, _r) -- equal
-    if r > 7 or _r > 7 then
+    if r > 15 or _r > 15 then
       error("invalid register")
     end
-    reg[7] = (reg[r] == reg[_r] and 0) or 1
+    reg[15] = (reg[r] == reg[_r] and 0) or 1
   end,
   [0x6] = function(r, _r) -- not equal
-    if r > 7 or _r > 7 then
+    if r > 15 or _r > 15 then
       error("invalid register")
     end
-    reg[7] = (reg[r] ~= reg[_r] and 0) or 1
+    reg[15] = (reg[r] ~= reg[_r] and 0) or 1
   end,
   [0x7] = function(r, _r) -- greater
-    if r > 7 or _r > 7 then
+    if r > 15 or _r > 15 then
       error("invalid register")
     end
-    reg[7] = (reg[r] > reg[_r] and 0) or 1
+    reg[15] = (reg[r] > reg[_r] and 0) or 1
   end,
   [0x8] = function(r, _r) -- less
-    if r > 7 or _r > 7 then
+    if r > 15 or _r > 15 then
       error("invalid register")
     end
     reg[7] = (reg[r] < reg[_r] and 0) or 1
@@ -113,21 +113,21 @@ local insts = {
     if c == 0 or c > 5 then -- absolute unconditional
       pgc = o
     elseif c == 1 then -- absolute if zero
-      if reg[7] == 0 then
+      if reg[15] == 0 then
         pgc = o
       end
     elseif c == 2 then -- absolute if not zero
-      if reg[7] ~= 0 then
+      if reg[15] ~= 0 then
         pgc = o
       end
     elseif c == 3 then -- relative unconditional
       pgc = o
     elseif c == 4 then -- relative if zero
-      if reg[7] == 0 then
+      if reg[15] == 0 then
         pgc = pgc + o
       end
     elseif c == 5 then -- relative if not zero
-      if reg[7] ~= 0 then
+      if reg[15] ~= 0 then
         pgc = pgc + o
       end
     end
@@ -157,11 +157,11 @@ while true do
   else
     error("invalid instruction")
   end
-  local e, _, code = computer.pullSignal(0)
+  local e, _, code = computer.pullSignal(0.000001)
   if e == "key_down" then
-    reg[6] = code
+    reg[14] = code
   else
-    reg[6] = 0
+    reg[14] = 0
   end
   pgc = pgc + 1
 end
